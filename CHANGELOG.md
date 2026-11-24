@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 0.1.1
+
+- Opening a Working or Needs-you agent in Herdr no longer dismisses it; only Done agents
+  are dismissed on opening.
+
 ## 0.1.0
 
 First public version.

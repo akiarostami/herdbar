@@ -111,7 +111,7 @@ private struct GeneralPage: View {
             }
 
             Section {
-                Toggle("Dismiss an agent when I open it in Herdr", isOn: $model.dismissesOnOpen)
+                Toggle("Dismiss a Done agent when I open it in Herdr", isOn: $model.dismissesOnOpen)
                 Picker("Dismiss Done agents after", selection: $model.autoDismissDoneMinutes) {
                     Text("Never").tag(0)
                     Text("5 minutes").tag(5)

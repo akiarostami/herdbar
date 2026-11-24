@@ -128,7 +128,7 @@ final class AppModel {
     var hidesMutedIn: Set<AgentState> {
         didSet { save(hidesMutedIn.map(\.rawValue).sorted(), "hidesMutedIn") }
     }
-    /// Whether opening an agent in Herdr also dismisses it here.
+    /// Whether opening a Done agent in Herdr also dismisses it here.
     var dismissesOnOpen: Bool {
         didSet { save(dismissesOnOpen, "dismissesOnOpen") }
     }
@@ -572,8 +572,9 @@ final class AppModel {
     /// Accessibility permission, and it assumes those shortcuts have not been changed in Herdr.
     func openHerdr(_ agent: Agent? = nil) {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "dev.herdr.app") else { return }
-        // Opening an agent means you have dealt with it.
-        if dismissesOnOpen, let agent, let current = agents.first(where: { $0.address == agent.address }) {
+        // Opening a Done agent means you have dealt with it.
+        if dismissesOnOpen, let agent, let current = agents.first(where: { $0.address == agent.address }),
+           current.state.isDismissedOnOpen {
             dismiss([current], undoable: true)
         }
         let jump = jumpsToSpace ? agent.flatMap(position) : nil

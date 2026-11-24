@@ -21,7 +21,7 @@ finishes, and takes you to it in Herdr with a click or a shortcut.
   <img src="docs/screenshots/label.png" width="90" alt="The menu bar label: three coloured counts">
 </p>
 
-Version 0.1.0. A personal tool, not affiliated with or endorsed by Herdr. Herdbar only
+Version 0.1.1. A personal tool, not affiliated with or endorsed by Herdr. Herdbar only
 reads from Herdr; it never sends anything to an agent.
 
 ## What it does
@@ -45,7 +45,7 @@ reads from Herdr; it never sends anything to an agent.
   muted agent sends no notifications. It stays in the menu, in grey, unless you keep muted
   agents out of that part of the menu; then it is not counted either.
 - **Dismiss:** move an agent to Idle until its state next changes. One at a time, all Done
-  at once, when you open it in Herdr, or after a set time for Done agents.
+  at once, or, for Done agents, when you open one in Herdr or after a set time.
 
 The screenshots show invented agents.
 

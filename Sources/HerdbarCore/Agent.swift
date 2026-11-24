@@ -12,6 +12,10 @@ public enum AgentState: Int, Codable, Comparable, Sendable, CaseIterable {
 
     public static func < (a: AgentState, b: AgentState) -> Bool { a.rawValue < b.rawValue }
 
+    /// Whether opening the agent in Herdr deals with it. Only a finished turn is dealt with
+    /// by looking at it; a working agent is still working, and one that needs you still does.
+    public var isDismissedOnOpen: Bool { self == .done }
+
     public var label: String {
         switch self {
         case .needsYou: return "Needs you"

@@ -135,6 +135,13 @@ private func agents() -> [Agent] {
 }
 
 @Suite struct GroupingAndNoticeTests {
+    @Test func onlyDoneIsDismissedOnOpen() {
+        #expect(AgentState.done.isDismissedOnOpen)
+        #expect(!AgentState.working.isDismissedOnOpen)
+        #expect(!AgentState.needsYou.isDismissedOnOpen)
+        #expect(!AgentState.idle.isDismissedOnOpen)
+    }
+
     @Test func spacesAndAgentsAreOrderedByUrgency() {
         let groups = Grouping.bySpace(agents())
         #expect(groups.map(\.name) == ["Blog", "Shop", "notes"])               // needs you, done, idle
