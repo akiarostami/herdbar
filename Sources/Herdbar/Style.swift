@@ -108,7 +108,7 @@ extension Image {
     func stateStyle(_ state: AgentState, size: CGFloat) -> some View {
         self.symbolRenderingMode(.palette)
             .foregroundStyle(state.hasWhiteMark ? Color.white : state.colour, state.colour)
-            .font(.system(size: size, weight: .semibold))
+            .font(.system(size: size, weight: .heavy))
             .offset(y: size * state.opticalDrop)
     }
 }

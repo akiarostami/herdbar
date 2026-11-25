@@ -75,41 +75,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         var parts: [(AgentState, Int)] = [(.working, counts.working), (.needsYou, counts.needsYou), (.done, counts.done)]
         if showsIdle { parts.append((.idle, counts.idle)) }
-        let symbolSize: CGFloat = 15
+        // Icons share one height rather than one square, so the wide bubble is not shrunk;
+        // heavy weight keeps them round and solid beside the system's own icons.
+        let iconHeight: CGFloat = 16
         let gap: CGFloat = 3
-        let spacing: CGFloat = 9
+        let spacing: CGFloat = 6
+        let plain = NSImage.SymbolConfiguration(pointSize: 13, weight: .heavy)
+        let icons: [(image: NSImage, size: NSSize)] = parts.map { part in
+            // The bubble and the disc have two layers: a white mark, then the shape. At zero
+            // the icon is drawn in one grey, like its number, with the mark cut out.
+            let coloured = plain.applying(.init(paletteColors: part.0.hasWhiteMark
+                ? [NSColor.white, part.0.nsColour] : [part.0.nsColour]))
+            let image = NSImage(systemSymbolName: part.0.symbol, accessibilityDescription: nil)?
+                .withSymbolConfiguration(part.1 > 0 ? coloured : plain) ?? NSImage()
+            // The bubble's tail adds height without weight, so it is drawn a little taller.
+            let height = iconHeight * (part.0 == .needsYou ? 0.95 : 1)
+            let width = image.size.height > 0 ? image.size.width * height / image.size.height : 0
+            return (image, NSSize(width: width, height: height))
+        }
         let widths = parts.map { ("\($0.1)" as NSString).size(withAttributes: [.font: font]).width }
-        let total = widths.reduce(0, +) + CGFloat(parts.count) * (symbolSize + gap) + CGFloat(parts.count - 1) * spacing
+        let total = widths.reduce(0, +) + icons.reduce(0) { $0 + $1.size.width } + CGFloat(parts.count) * gap
+            + CGFloat(parts.count - 1) * spacing
         let image = NSImage(size: NSSize(width: ceil(total), height: 18), flipped: false) { rect in
             var x: CGFloat = 0
             for (index, part) in parts.enumerated() {
                 let active = part.1 > 0
-                // The bubble and the disc have two layers: a white mark, then the shape. At
-                // zero the icon is drawn in one grey, like its number, with the mark cut out.
-                let configuration = NSImage.SymbolConfiguration(pointSize: 12.5, weight: .semibold)
-                    .applying(.init(paletteColors: part.0.hasWhiteMark ? [NSColor.white, part.0.nsColour] : [part.0.nsColour]))
-                if let symbol = NSImage(systemSymbolName: part.0.symbol, accessibilityDescription: nil)?
-                    .withSymbolConfiguration(active ? configuration : NSImage.SymbolConfiguration(pointSize: 12.5, weight: .semibold)) {
-                    let scale = min(symbolSize / symbol.size.width, symbolSize / symbol.size.height, 1)
-                    let size = NSSize(width: symbol.size.width * scale, height: symbol.size.height * scale)
-                    let frame = NSRect(x: x + (symbolSize - size.width) / 2,
-                                       y: (rect.height - size.height) / 2 - symbolSize * part.0.opticalDrop,
-                                       width: size.width, height: size.height)
-                    if active {
-                        symbol.draw(in: frame)
-                    } else {
-                        // Tint with the grey made opaque, then draw at the grey's own opacity:
-                        // a see-through tint over the black symbol would come out dark.
-                        let grey = NSColor.secondaryLabelColor.usingColorSpace(.sRGB) ?? .gray
-                        NSImage(size: symbol.size, flipped: false) { bounds in
-                            symbol.draw(in: bounds)
-                            grey.withAlphaComponent(1).set()
-                            bounds.fill(using: .sourceAtop)
-                            return true
-                        }.draw(in: frame, from: .zero, operation: .sourceOver, fraction: grey.alphaComponent)
-                    }
+                let (symbol, size) = icons[index]
+                let frame = NSRect(x: x, y: (rect.height - size.height) / 2 - (part.0 == .needsYou ? iconHeight * 0.04 : 0),
+                                   width: size.width, height: size.height)
+                if active {
+                    symbol.draw(in: frame)
+                } else {
+                    // Tint with the grey made opaque, then draw at the grey's own opacity: a
+                    // see-through tint over the black symbol would come out dark.
+                    let grey = NSColor.secondaryLabelColor.usingColorSpace(.sRGB) ?? .gray
+                    NSImage(size: symbol.size, flipped: false) { bounds in
+                        symbol.draw(in: bounds)
+                        grey.withAlphaComponent(1).set()
+                        bounds.fill(using: .sourceAtop)
+                        return true
+                    }.draw(in: frame, from: .zero, operation: .sourceOver, fraction: grey.alphaComponent)
                 }
-                x += symbolSize + gap
+                x += size.width + gap
                 let text = "\(part.1)" as NSString
                 let attributes: [NSAttributedString.Key: Any] = [
                     .font: font, .foregroundColor: active ? NSColor.labelColor : NSColor.secondaryLabelColor,
