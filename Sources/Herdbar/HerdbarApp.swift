@@ -81,24 +81,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         let gap: CGFloat = 3
         let spacing: CGFloat = 6
         let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .heavy)
-        let icons: [(image: NSImage, size: NSSize)] = parts.map { part in
+        // Each symbol's image has its own blank margins; lay out by the visible ink instead,
+        // so the gap to each number looks the same.
+        let icons: [(image: NSImage, ink: NSRect)] = parts.map { part in
             let image = NSImage(systemSymbolName: part.0.symbol, accessibilityDescription: nil)?
                 .withSymbolConfiguration(configuration) ?? NSImage()
-            // The bubble's tail adds height without weight, so it is drawn a little taller.
-            let height = iconHeight * (part.0 == .needsYou ? 0.95 : 1)
-            let width = image.size.height > 0 ? image.size.width * height / image.size.height : 0
-            return (image, NSSize(width: width, height: height))
+            let ink = Self.inkBounds(of: image, symbol: part.0.symbol)
+            let height = iconHeight
+            let scale = ink.height > 0 ? height / ink.height : 0
+            return (image, NSRect(x: ink.minX * scale, y: ink.minY * scale, width: ink.width * scale, height: height))
         }
         let widths = parts.map { ("\($0.1)" as NSString).size(withAttributes: [.font: font]).width }
-        let total = widths.reduce(0, +) + icons.reduce(0) { $0 + $1.size.width } + CGFloat(parts.count) * gap
+        // A play's point leaves empty space beside it, so its number sits a little closer.
+        let gaps = parts.map { $0.0 == .working ? gap - 0.8 : gap }
+        let total = widths.reduce(0, +) + icons.reduce(0) { $0 + $1.ink.width } + gaps.reduce(0, +)
             + CGFloat(parts.count - 1) * spacing
-        let image = NSImage(size: NSSize(width: ceil(total), height: 18), flipped: false) { rect in
-            var x: CGFloat = 0
+        // A point of room on each side and above and below, so antialiased edges are not cut.
+        let image = NSImage(size: NSSize(width: ceil(total) + 2, height: 20), flipped: false) { rect in
+            var x: CGFloat = 1
             for (index, part) in parts.enumerated() {
                 let active = part.1 > 0
-                let (symbol, size) = icons[index]
-                let frame = NSRect(x: x, y: (rect.height - size.height) / 2 - (part.0 == .needsYou ? iconHeight * 0.04 : 0),
-                                   width: size.width, height: size.height)
+                let (symbol, ink) = icons[index]
+                // The whole image, placed so that its ink starts at x and is centred vertically.
+                let scale = ink.height / max(Self.inkBounds(of: symbol, symbol: part.0.symbol).height, 1)
+                let frame = NSRect(x: x - ink.minX,
+                                   y: (rect.height - ink.height) / 2 - ink.minY
+                                       - (part.0 == .needsYou ? iconHeight * 0.04 : 0),
+                                   width: symbol.size.width * scale, height: symbol.size.height * scale)
                 // One colour for the whole symbol, so the bubble's dots and the tick are cut out
                 // and the menu bar shows through. At zero the colour is the grey of the number.
                 // The colour is made opaque for the tint and its opacity applied when drawing:
@@ -110,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
                     bounds.fill(using: .sourceAtop)
                     return true
                 }.draw(in: frame, from: .zero, operation: .sourceOver, fraction: colour.alphaComponent)
-                x += size.width + gap
+                x += ink.width + gaps[index]
                 let text = "\(part.1)" as NSString
                 let attributes: [NSAttributedString.Key: Any] = [
                     .font: font, .foregroundColor: active ? NSColor.labelColor : NSColor.secondaryLabelColor,
@@ -125,6 +134,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         image.accessibilityDescription = "Herdbar"
         return image
     }
+
+    /// The part of a symbol image that is drawn, in the image's points.
+    static func inkBounds(of image: NSImage, symbol: String) -> NSRect {
+        let key = "\(symbol) \(image.size.width)x\(image.size.height)"
+        if let cached = inkCache[key] { return cached }
+        let factor: CGFloat = 4
+        let width = Int(image.size.width * factor), height = Int(image.size.height * factor)
+        guard width > 0, height > 0, let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
+        else { return NSRect(origin: .zero, size: image.size) }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
+        NSGraphicsContext.restoreGraphicsState()
+        var minX = width, maxX = -1, minY = height, maxY = -1
+        for row in 0..<height {
+            for column in 0..<width where (rep.colorAt(x: column, y: row)?.alphaComponent ?? 0) > 0.3 {
+                minX = min(minX, column); maxX = max(maxX, column)
+                minY = min(minY, row); maxY = max(maxY, row)
+            }
+        }
+        guard maxX >= minX else { return NSRect(origin: .zero, size: image.size) }
+        // Bitmap rows count down from the top; image points count up from the bottom.
+        let bounds = NSRect(x: CGFloat(minX) / factor, y: CGFloat(height - 1 - maxY) / factor,
+                            width: CGFloat(maxX - minX + 1) / factor, height: CGFloat(maxY - minY + 1) / factor)
+        inkCache[key] = bounds
+        return bounds
+    }
+
+    @MainActor private static var inkCache: [String: NSRect] = [:]
 
     // MARK: Shortcut and keys
 
