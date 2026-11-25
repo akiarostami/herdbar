@@ -87,7 +87,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
             let image = NSImage(systemSymbolName: part.0.symbol, accessibilityDescription: nil)?
                 .withSymbolConfiguration(configuration) ?? NSImage()
             let ink = Self.inkBounds(of: image, symbol: part.0.symbol)
-            let height = iconHeight
+            // A solid triangle carries more weight than a disc of the same height.
+            let height = iconHeight * (part.0 == .working ? 0.92 : 1)
             let scale = ink.height > 0 ? height / ink.height : 0
             return (image, NSRect(x: ink.minX * scale, y: ink.minY * scale, width: ink.width * scale, height: height))
         }
