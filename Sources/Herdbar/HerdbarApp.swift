@@ -80,14 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         let iconHeight: CGFloat = 16
         let gap: CGFloat = 3
         let spacing: CGFloat = 6
-        let plain = NSImage.SymbolConfiguration(pointSize: 13, weight: .heavy)
+        let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .heavy)
         let icons: [(image: NSImage, size: NSSize)] = parts.map { part in
-            // The bubble and the disc have two layers: a white mark, then the shape. At zero
-            // the icon is drawn in one grey, like its number, with the mark cut out.
-            let coloured = plain.applying(.init(paletteColors: part.0.hasWhiteMark
-                ? [NSColor.white, part.0.nsColour] : [part.0.nsColour]))
             let image = NSImage(systemSymbolName: part.0.symbol, accessibilityDescription: nil)?
-                .withSymbolConfiguration(part.1 > 0 ? coloured : plain) ?? NSImage()
+                .withSymbolConfiguration(configuration) ?? NSImage()
             // The bubble's tail adds height without weight, so it is drawn a little taller.
             let height = iconHeight * (part.0 == .needsYou ? 0.95 : 1)
             let width = image.size.height > 0 ? image.size.width * height / image.size.height : 0
@@ -103,19 +99,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
                 let (symbol, size) = icons[index]
                 let frame = NSRect(x: x, y: (rect.height - size.height) / 2 - (part.0 == .needsYou ? iconHeight * 0.04 : 0),
                                    width: size.width, height: size.height)
-                if active {
-                    symbol.draw(in: frame)
-                } else {
-                    // Tint with the grey made opaque, then draw at the grey's own opacity: a
-                    // see-through tint over the black symbol would come out dark.
-                    let grey = NSColor.secondaryLabelColor.usingColorSpace(.sRGB) ?? .gray
-                    NSImage(size: symbol.size, flipped: false) { bounds in
-                        symbol.draw(in: bounds)
-                        grey.withAlphaComponent(1).set()
-                        bounds.fill(using: .sourceAtop)
-                        return true
-                    }.draw(in: frame, from: .zero, operation: .sourceOver, fraction: grey.alphaComponent)
-                }
+                // One colour for the whole symbol, so the bubble's dots and the tick are cut out
+                // and the menu bar shows through. At zero the colour is the grey of the number.
+                // The colour is made opaque for the tint and its opacity applied when drawing:
+                // a see-through tint over the black symbol would come out dark.
+                let colour = (active ? part.0.nsColour : NSColor.secondaryLabelColor).usingColorSpace(.sRGB) ?? .gray
+                NSImage(size: symbol.size, flipped: false) { bounds in
+                    symbol.draw(in: bounds)
+                    colour.withAlphaComponent(1).set()
+                    bounds.fill(using: .sourceAtop)
+                    return true
+                }.draw(in: frame, from: .zero, operation: .sourceOver, fraction: colour.alphaComponent)
                 x += size.width + gap
                 let text = "\(part.1)" as NSString
                 let attributes: [NSAttributedString.Key: Any] = [

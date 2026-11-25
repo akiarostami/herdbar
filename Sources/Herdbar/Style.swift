@@ -12,10 +12,6 @@ extension AgentState {
         }
     }
 
-    /// Whether the symbol has a white mark inside a coloured shape: the dots in the bubble,
-    /// the tick in the disc.
-    var hasWhiteMark: Bool { self == .needsYou || self == .done }
-
     /// How far to move the symbol down, as a share of its size, so it looks centred. The
     /// bubble's tail adds height below its body, so centring the whole box sits the body
     /// too high.
@@ -103,11 +99,11 @@ struct CountChip: View {
 }
 
 extension Image {
-    /// The state's symbol at `size` points, in its colour, with a white mark inside where
-    /// it has one, moved down where it needs to be to look centred.
+    /// The state's symbol at `size` points in its colour, with the bubble's dots and the tick
+    /// cut out, moved down where it needs to be to look centred.
     func stateStyle(_ state: AgentState, size: CGFloat) -> some View {
-        self.symbolRenderingMode(.palette)
-            .foregroundStyle(state.hasWhiteMark ? Color.white : state.colour, state.colour)
+        self.symbolRenderingMode(.monochrome)
+            .foregroundStyle(state.colour)
             .font(.system(size: size, weight: .heavy))
             .offset(y: size * state.opticalDrop)
     }
