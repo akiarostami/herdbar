@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.1.2
+
+- Banners and opened rows show the name a session was given with /rename, rather than
+  the title Claude Code first wrote for it. A title that only repeats the agent's name
+  is left out.
+
 ## 0.1.1
 
 - Opening a Working or Needs-you agent in Herdr no longer dismisses it; only Done agents

@@ -6,7 +6,8 @@ import Foundation
 /// hundreds of megabytes, so only the end of the file is read.
 public enum Transcript {
     public struct Latest: Equatable, Sendable {
-        /// Claude's own short title for the session.
+        /// The session's title: the name it was given with /rename, or else the short title
+        /// Claude Code wrote for it.
         public var title: String?
         /// The start of the last thing the agent said.
         public var message: String?
@@ -54,18 +55,27 @@ public enum Transcript {
         var lines = data.split(separator: 0x0A, omittingEmptySubsequences: true)
         if start > 0, !lines.isEmpty { lines.removeFirst() }  // the first line is probably cut
 
+        // Claude Code keeps writing both titles near the end of the file, so the tail holds
+        // them. A name given with /rename wins over Claude's own title.
         var latest = Latest()
+        var customTitle: String?
+        var aiTitle: String?
         for line in lines.reversed() {
-            if latest.title != nil, latest.message != nil { break }
+            if customTitle != nil, latest.message != nil { break }
             // Cheap checks first: most lines are neither a title nor an assistant message.
-            let isTitle = line.range(of: Data(#""type":"ai-title""#.utf8)) != nil
+            let isCustom = line.range(of: Data(#""type":"custom-title""#.utf8)) != nil
+            let isAI = line.range(of: Data(#""type":"ai-title""#.utf8)) != nil
             let isAssistant = line.range(of: Data(#""type":"assistant""#.utf8)) != nil
-            guard (isTitle && latest.title == nil) || (isAssistant && latest.message == nil),
+            guard (isCustom && customTitle == nil) || (isAI && aiTitle == nil) || (isAssistant && latest.message == nil),
                   let entry = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
             switch entry["type"] as? String {
+            case "custom-title":
+                if customTitle == nil, let title = entry["customTitle"] as? String, !title.isEmpty {
+                    customTitle = title
+                }
             case "ai-title":
-                if latest.title == nil, let title = entry["aiTitle"] as? String, !title.isEmpty {
-                    latest.title = title
+                if aiTitle == nil, let title = entry["aiTitle"] as? String, !title.isEmpty {
+                    aiTitle = title
                 }
             case "assistant":
                 // Skip subagents' messages, which share the file.
@@ -80,6 +90,7 @@ public enum Transcript {
                 continue
             }
         }
+        latest.title = customTitle ?? aiTitle
         return latest
     }
 

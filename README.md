@@ -21,7 +21,7 @@ finishes, and takes you to it in Herdr with a click or a shortcut.
   <img src="docs/screenshots/label.png" width="90" alt="The menu bar label: three coloured counts">
 </p>
 
-Version 0.1.1. A personal tool, not affiliated with or endorsed by Herdr. Herdbar only
+Version 0.1.2. A personal tool, not affiliated with or endorsed by Herdr. Herdbar only
 reads from Herdr; it never sends anything to an agent.
 
 ## What it does

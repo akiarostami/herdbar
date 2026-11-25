@@ -90,6 +90,16 @@ private func agents() -> [Agent] {
         #expect(latest == Transcript.Latest(title: "Run sign-in checks", message: "Done. The email errors are now linked."))
     }
 
+    @Test func renamedTitleWins() throws {
+        let url = try file([
+            #"{"type":"custom-title","customTitle":"Old name"}"#,
+            #"{"type":"custom-title","customTitle":"architect"}"#,
+            #"{"type":"ai-title","aiTitle":"Rename the tab"}"#,
+            #"{"type":"assistant","message":{"content":[{"type":"text","text":"Done."}]}}"#,
+        ])
+        #expect(Transcript.latest(in: url) == Transcript.Latest(title: "architect", message: "Done."))
+    }
+
     @Test func readsOnlyTheEndButWidensWhenNeeded() throws {
         let filler = Array(repeating: #"{"type":"mode","mode":"default","pad":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}"#, count: 40)
         let url = try file([#"{"type":"assistant","message":{"content":[{"type":"text","text":"Far back."}]}}"#] + filler)

@@ -442,7 +442,10 @@ final class AppModel {
             let latest = await Task.detached(priority: .userInitiated) {
                 Transcript.file(sessionID: session).map { Transcript.latest(in: $0, messageLimit: 6000) }
             }.value
-            if let latest { self?.lastWords[address] = latest }
+            if var latest {
+                latest.title = Self.titleWorthShowing(latest.title, besides: agent.name)
+                self?.lastWords[address] = latest
+            }
         }
     }
 
@@ -492,6 +495,12 @@ final class AppModel {
         }
     }
 
+    /// The session's title, unless it only repeats the agent's name, which is already shown.
+    nonisolated static func titleWorthShowing(_ title: String?, besides name: String) -> String? {
+        guard let title, title.caseInsensitiveCompare(name) != .orderedSame else { return nil }
+        return title
+    }
+
     /// Adds what the agent last said, read from its Claude transcript off the main thread,
     /// then shows the notice in the chosen style.
     private func deliver(_ notice: Notice) {
@@ -501,7 +510,7 @@ final class AppModel {
                 let latest = await Task.detached(priority: .utility) {
                     Transcript.file(sessionID: session).map { Transcript.latest(in: $0) }
                 }.value
-                notice.headline = latest?.title
+                notice.headline = Self.titleWorthShowing(latest?.title, besides: notice.agent.name)
                 notice.excerpt = latest?.message
             }
             guard let self else { return }
