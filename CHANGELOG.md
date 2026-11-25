@@ -7,6 +7,9 @@
 - Banners and opened rows show the name a session was given with /rename, rather than
   the title Claude Code first wrote for it. A title that only repeats the agent's name
   is left out.
+- In the menu bar, a state's icon is grey while its count is zero, like the number; it
+  takes its colour when the count is above zero.
+- New state icons: a blue play for Working and a yellow speech bubble for Needs you.
 
 ## 0.1.1
 

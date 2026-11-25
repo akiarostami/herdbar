@@ -141,9 +141,7 @@ struct BannerCard: View {
     var body: some View {
         let state = notice.agent.state
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: state.symbol)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(state.colour)
+            Image(systemName: state.symbol).stateStyle(state, size: 18)
                 .frame(width: 24)
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {

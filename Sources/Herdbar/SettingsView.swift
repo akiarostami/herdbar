@@ -222,7 +222,7 @@ private struct NotificationsPage: View {
                     .disabled(!model.notifyNeedsYou)
             } header: {
                 HStack(spacing: 6) {
-                    Image(systemName: "hand.raised.fill").foregroundStyle(.yellow)
+                    Image(systemName: AgentState.needsYou.symbol).stateStyle(.needsYou, size: 13)
                     Text("When an agent needs you")
                 }
             }
@@ -322,7 +322,7 @@ private struct AgentsPage: View {
                 ForEach(Grouping.menuOrder, id: \.self) { state in
                     Toggle(isOn: model.hidesMutedBinding(state)) {
                         HStack(spacing: 8) {
-                            Image(systemName: state.symbol).foregroundStyle(state.colour).frame(width: 18)
+                            Image(systemName: state.symbol).stateStyle(state, size: 13).frame(width: 18)
                             Text("Show under \(state.label)")
                         }
                     }
@@ -343,7 +343,7 @@ private struct AgentsPage: View {
                     ForEach(group.agents) { agent in
                         RuleRow(key: agent.muteKey) {
                             HStack(spacing: 8) {
-                                Image(systemName: agent.state.symbol).foregroundStyle(agent.state.colour).frame(width: 18)
+                                Image(systemName: agent.state.symbol).stateStyle(agent.state, size: 13).frame(width: 18)
                                 Text(agent.name)
                                 if !agent.tab.isEmpty, agent.tab != agent.name {
                                     Text(agent.tab).font(.caption).foregroundStyle(.secondary)

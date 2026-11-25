@@ -5,12 +5,21 @@ import SwiftUI
 extension AgentState {
     var symbol: String {
         switch self {
-        case .needsYou: return "hand.raised.fill"
+        case .needsYou: return "ellipsis.bubble.fill"
         case .done: return "checkmark.circle.fill"
-        case .working: return "waveform"
+        case .working: return "play.fill"
         case .idle: return "circle"
         }
     }
+
+    /// Whether the symbol has a white mark inside a coloured shape: the dots in the bubble,
+    /// the tick in the disc.
+    var hasWhiteMark: Bool { self == .needsYou || self == .done }
+
+    /// How far to move the symbol down, as a share of its size, so it looks centred. The
+    /// bubble's tail adds height below its body, so centring the whole box sits the body
+    /// too high.
+    var opticalDrop: CGFloat { self == .needsYou ? 0.09 : 0 }
 
     var colour: Color {
         switch self {
@@ -85,12 +94,21 @@ struct CountChip: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: state.symbol)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(state.colour)
+            Image(systemName: state.symbol).stateStyle(state, size: 11)
             Text(showsLabel ? "\(count) \(state.label.lowercased())" : "\(count)")
                 .font(.callout.weight(.medium).monospacedDigit())
                 .foregroundStyle(count > 0 ? Color.primary : Color.secondary)
         }
+    }
+}
+
+extension Image {
+    /// The state's symbol at `size` points, in its colour, with a white mark inside where
+    /// it has one, moved down where it needs to be to look centred.
+    func stateStyle(_ state: AgentState, size: CGFloat) -> some View {
+        self.symbolRenderingMode(.palette)
+            .foregroundStyle(state.hasWhiteMark ? Color.white : state.colour, state.colour)
+            .font(.system(size: size, weight: .semibold))
+            .offset(y: size * state.opticalDrop)
     }
 }

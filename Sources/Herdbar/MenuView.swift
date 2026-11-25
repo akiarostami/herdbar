@@ -110,9 +110,7 @@ private struct StateSection: View {
                 withAnimation(.easeOut(duration: 0.15)) { model.showsIdle.toggle() }
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: section.state.symbol)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(section.state.colour)
+                    Image(systemName: section.state.symbol).stateStyle(section.state, size: 14)
                         .frame(width: 18)
                     Text(section.state.label).font(.headline)
                     Text("\(section.agents.count)")
